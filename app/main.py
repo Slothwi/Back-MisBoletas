@@ -1,8 +1,6 @@
 from fastapi import FastAPI
-port = 3000
+from app.api.v1 import user
 
 app = FastAPI()
 
-@app.get("/")
-async def read_root():
-    return {"message": "API MisBoletas!"}
+app.include_router(user.router, prefix="/api/v1/user")
