@@ -1,7 +1,30 @@
 from fastapi import FastAPI
 from app.api.v1 import user, product
+from app.core.middleware import setup_middleware
+from app.core.error_handlers import setup_exception_handlers
 
-app = FastAPI()
+# Crear aplicación FastAPI
+app = FastAPI(
+    title="MisBoletas API",
+    description="API para gestión de productos, garantías y boletas",
+    version="1.0.0"
+)
 
-app.include_router(user.router, prefix="/api/v1")
-app.include_router(product.router, prefix="/api/v1")
+# Configurar middleware (CORS, logging, etc.)
+setup_middleware(app)
+
+# Configurar manejadores de errores globales
+setup_exception_handlers(app)
+
+# Registrar routers de endpoints
+app.include_router(user.router, prefix="/api/v1", tags=["usuarios"])
+app.include_router(product.router, prefix="/api/v1", tags=["productos"])
+
+@app.get("/")
+async def root():
+    """Endpoint raíz para verificar que la API está funcionando."""
+    return {
+        "message": "API MisBoletas funcionando correctamente",
+        "version": "1.0.0",
+        "docs": "/docs"
+    }

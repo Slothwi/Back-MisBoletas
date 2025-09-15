@@ -1,18 +1,9 @@
 """
 Modelo SQLAlchemy para la tabla Usuarios.
 
-Define la estructura de usuarios del sistema MisBoletas:
-- Información básica: nombre, email, contraseña
-- Relaciones: categorías y productos pertenecientes al usuario
-- Constraints: email único, campos requeridos
+Define la estructura de usuarios del sistema MisBoletas
 
 Tabla: Usuarios
-Relaciones:
-- 1:N con Categorias (un usuario tiene muchas categorías)
-- 1:N con Productos (un usuario tiene muchos productos)
-
-Autor: Configurado para proyecto MisBoletas
-Fecha: 2025-09-11
 """
 
 from sqlalchemy import Column, Integer, String

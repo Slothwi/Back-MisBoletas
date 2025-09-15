@@ -1,10 +1,7 @@
 """
 Modelo SQLAlchemy para la tabla Categorias.
 
-Define categorías para organizar productos:
-- Información: nombre, color para identificación visual
-- Pertenencia: cada categoría pertenece a un usuario específico
-- Relaciones: con usuario propietario y productos asociados
+Define categorías para organizar productos
 
 """
 

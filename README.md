@@ -28,10 +28,10 @@
 4. Crear archivo .env en la raíz del proyecto:
 
 ```env
-SQLSERVER_SERVER=localhost
-SQLSERVER_DATABASE=MisBoletas
-SQLSERVER_USERNAME=
-SQLSERVER_PASSWORD=
+   SQLSERVER_SERVER=localhost
+   SQLSERVER_DATABASE=MisBoletas
+   SQLSERVER_USERNAME=
+   SQLSERVER_PASSWORD=
 ```
 
 5. Verificar conexión a BD

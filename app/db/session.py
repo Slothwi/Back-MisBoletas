@@ -50,6 +50,6 @@ Base = declarative_base()
 def get_db():
     db = SessionLocal()
     try:
-        yield db
+        yield db  # yield solo nos da acceso a una sesion de base de datos, y garantiza que no tengamos varias abiertas al mismo tiempo
     finally:
         db.close()

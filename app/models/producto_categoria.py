@@ -9,9 +9,6 @@ Ejemplos de uso:
 - Producto "iPhone" en categorías: "Electrónicos", "Celulares", "Apple"  
 - Producto "Cafetera" en categorías: "Electrodomésticos", "Cocina"
 
-Esta tabla intermedia elimina la necesidad de duplicar productos
-para diferentes categorizaciones.
-
 """
 
 from sqlalchemy import Table, Column, Integer, ForeignKey
