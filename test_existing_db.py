@@ -9,6 +9,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app.db.session import engine, SessionLocal
 from app.models import Usuario
+from sqlalchemy import text
 
 def test_existing_database():
     """Prueba conectar a la base de datos existente"""
