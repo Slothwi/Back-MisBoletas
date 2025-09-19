@@ -24,7 +24,7 @@ class Producto(Base):
     Modelo = Column(String(50))
     Tienda = Column(String(50))
     Notas = Column(Text)
-    UsuarioID = Column(Integer, ForeignKey("Usuarios.UsuarioID"), nullable=False)
+    UsuarioID = Column(Integer, ForeignKey("Usuarios.idUsuario"), nullable=False)
     
     # Relaciones
     usuario = relationship("Usuario", back_populates="productos")
