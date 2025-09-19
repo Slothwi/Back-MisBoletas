@@ -1,96 +1,102 @@
 """
-Middleware personalizado para la aplicación MisBoletas.
+Middleware para la aplicación MisBoletas.
 
-Incluye:
-- CORS para el frontend React Native
-- Logging de requests
-- Manejo global de errores
-- Métricas de rendimiento
-
+Este archivo configura:
+1. CORS - Permite que el frontend React Native se conecte
+2. Logging - Registra todas las requests para debugging
+3. Hosts confiables - Solo permite ciertos hosts por seguridad
 """
 
-from fastapi import FastAPI, Request, Response
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 import time
 import logging
 from typing import Callable
 
-# Configurar logging
+# Configurar logging básico
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 def add_cors_middleware(app: FastAPI):
     """
-    Agrega middleware CORS para permitir conexiones desde React Native.
+    Permite que el frontend (React Native) se conecte al backend desde una IP/puerto diferente.
     """
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],  # En producción, especificar orígenes exactos
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
+        allow_origins=["*"],           # Cambiar en producción
+        allow_credentials=True,         # Permite cookies/auth
+        allow_methods=["GET", "POST", "PUT", "DELETE"],  # Métodos HTTP permitidos
+        allow_headers=["*"],           # Headers permitidos
     )
+    logger.info(" CORS configurado - Frontend puede conectarse")
 
-def add_trusted_host_middleware(app: FastAPI):
+def add_logging_middleware(app: FastAPI):
     """
-    Agrega middleware para validar hosts confiables.
+    Registra todas las requests para debugging.
+    """
+    
+    @app.middleware("http")
+    async def log_requests(request: Request, call_next: Callable):
+        # Registrar cuando llega el request
+        start_time = time.time()
+        client_ip = request.client.host if request.client else "unknown"
+        
+        logger.info(f" {request.method} {request.url.path} desde {client_ip}")
+        
+        try:
+            # Procesar el request
+            response = await call_next(request)
+            
+            # Calcular cuánto tiempo tardó
+            duration = time.time() - start_time
+            
+            # Registrar la respuesta
+            logger.info(
+                f" {request.method} {request.url.path} → "
+                f" Status {response.status_code} en {duration:.3f}s"
+            )
+            
+            # Agregar tiempo al header (útil para debugging)
+            response.headers["X-Process-Time"] = f"{duration:.3f}"
+            return response
+            
+        except Exception as error:
+            duration = time.time() - start_time
+            logger.error(
+                f"{request.method} {request.url.path} → "
+                f"ERROR: {str(error)} en {duration:.3f}s"
+            )
+            raise  # Re-lanzar el error
+
+def add_security_middleware(app: FastAPI):
+    """
+    Solo permite requests desde hosts confiables.
     """
     app.add_middleware(
         TrustedHostMiddleware, 
-        allowed_hosts=["localhost", "127.0.0.1"]
+        allowed_hosts=[
+            "localhost",     # Desarrollo local
+            "127.0.0.1",     # Desarrollo local
+            "*"              # Temporalmente permite todo - cambiar en producción
+        ]
     )
-
-async def log_requests_middleware(request: Request, call_next: Callable):
-    """
-    Middleware para logging de todas las requests.
-    """
-    start_time = time.time()
-    
-    # Log de request entrante
-    logger.info(f"{request.method} {request.url.path} - Cliente: {request.client.host}")
-    
-    # Procesar request
-    try:
-        response = await call_next(request)
-        
-        # Calcular tiempo de procesamiento
-        process_time = time.time() - start_time
-        
-        # Log de response
-        logger.info(
-            f"{request.method} {request.url.path} - "
-            f"Status: {response.status_code} - "
-            f"Tiempo: {process_time:.3f}s"
-        )
-        
-        # Agregar header con tiempo de procesamiento
-        response.headers["X-Process-Time"] = str(process_time)
-        
-        return response
-        
-    except Exception as e:
-        process_time = time.time() - start_time
-        logger.error(
-            f"{request.method} {request.url.path} - "
-            f"Error: {str(e)} - "
-            f"Tiempo: {process_time:.3f}s"
-        )
-        raise
+    logger.info(" Hosts de seguridad configurados")
 
 def setup_middleware(app: FastAPI):
     """
-    Configura todos los middlewares de la aplicación.
+    Función principal que configura TODO el middleware.
     """
-    # Orden importante: el primero en agregarse es el último en ejecutarse
+    logger.info(" Configuramdo middleware...")
+
+    # 1. Logging (se ejecuta al final, después de todo)
+    add_logging_middleware(app)
     
-    # 1. Logging (se ejecuta último)
-    app.middleware("http")(log_requests_middleware)
-    
-    # 2. CORS (se ejecuta penúltimo) 
+    # 2. CORS (se ejecuta en el medio)
     add_cors_middleware(app)
     
-    # 3. Trusted hosts (se ejecuta primero)
-    add_trusted_host_middleware(app)
+    # 3. Security (se ejecuta primero, antes que todo)
+    add_security_middleware(app)
     
-    logger.info("Middleware configurado exitosamente")
+    logger.info(" Middleware configurado exitosamente")
+    logger.info(" El frontend ya puede conectarse al backend")
