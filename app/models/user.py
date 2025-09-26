@@ -14,9 +14,8 @@ class Usuario(Base):
     productos = relationship("Producto", back_populates="usuario")
     __tablename__ = "Usuarios"
 
-    idUsuario = Column(Integer, primary_key=True, index=True)
-    nombre = Column(String(50), nullable=False)
-    apellido = Column(String(50), nullable=False)
-    correo = Column(String(100), unique=True, nullable=False)
-    contrasena = Column(String(255), nullable=False)
+    UsuarioID = Column(Integer, primary_key=True, index=True)
+    NombreUsuario = Column(String(50), nullable=False)
+    Email = Column(String(100), unique=True, nullable=False)
+    ContraseñaHash = Column(String(255), nullable=False)
     fechaRegistro = Column(String, nullable=True)  

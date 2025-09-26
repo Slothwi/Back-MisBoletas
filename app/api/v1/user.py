@@ -1,50 +1,46 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
 
-from app.schemas.user import User
+from app.schemas.user import UserRead, UserCreate
 from app.crud import user as crud_user
 from app.db.session import get_db
+from app.core.security import hash_password
 
-# Router para endpoints de usuarios
 router = APIRouter()
 
-# Endpoint para obtener todos los usuarios
-@router.get("/users/")
-async def get_users():
-    usuarios = crud_user.get_users()
-    if not usuarios:
-        return {"message": "No hay usuarios registrados"}
-    return usuarios
-@router.get("/users/", response_model=List[User])
+# Obtener todos los usuarios
+@router.get("/users/", response_model=List[UserRead])
 async def get_users(db: Session = Depends(get_db)):
-    """Obtiene todos los usuarios desde la base de datos."""
-    return crud_user.get_users_list(db)
+    usuarios = crud_user.get_users_list(db)
+    if not usuarios:
+        raise HTTPException(status_code=404, detail="No hay usuarios registrados")
+    return usuarios
 
-# Endpoint para obtener un usuario específico por ID (parámetro de ruta)
-@router.get("/users/{user_id}", response_model=User)
+# Obtener un usuario por ID
+@router.get("/users/{user_id}", response_model=UserRead)
 async def get_user(user_id: int, db: Session = Depends(get_db)):
-    """Obtiene un usuario específico por su ID."""
-    return crud_user.search_user_wrapper(db, user_id)
+    usuario = crud_user.search_user(db, user_id)
+    if not usuario:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    return usuario
 
-# Endpoint para crear un nuevo usuario
-@router.post("/users/", response_model=User, status_code=201)
-async def create_user(user: User, db: Session = Depends(get_db)):
-    """Crea un nuevo usuario en la base de datos."""
-    return crud_user.create_user_wrapper(db, user)
+# Crear un usuario nuevo
+@router.post("/users/", response_model=UserRead, status_code=201)
+async def create_user(user: UserCreate, db: Session = Depends(get_db)):
+    # Hashear la contraseña antes de guardarla
+    user.contrasena = hash_password(user.contrasena)
+    return crud_user.create_user(db, user)
 
-# Endpoint para actualizar un usuario existente
-@router.put("/users/{user_id}", response_model=User)
-async def update_user(user_id: int, user: User, db: Session = Depends(get_db)):
-    """Actualiza un usuario existente."""
-    # Asegurar que el ID coincida
-    user.id = user_id
-    return crud_user.update_user_wrapper(db, user)
+# Actualizar un usuario existente
+@router.put("/users/{user_id}", response_model=UserRead)
+async def update_user(user_id: int, user: UserCreate, db: Session = Depends(get_db)):
+    if user.contrasena:
+        user.contrasena = hash_password(user.contrasena)
+    return crud_user.update_user(db, user_id, user)
 
-# Endpoint para eliminar un usuario por ID
-@router.delete("/users/{user_id}")
+# Eliminar un usuario
+@router.delete("/users/{user_id}", status_code=204)
 async def delete_user(user_id: int, db: Session = Depends(get_db)):
-    """Elimina un usuario de la base de datos."""
-    return crud_user.delete_user(db, user_id)
-
-
+    crud_user.delete_user(db, user_id)
+    return {"message": "Usuario eliminado"}

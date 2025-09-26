@@ -1,98 +1,92 @@
-from app.schemas.user import User
 from app.models.user import Usuario
-from app.db.session import SessionLocal
+from app.schemas.user import UserCreate, UserRead
+from sqlalchemy.orm import Session
 from fastapi import HTTPException
 from sqlalchemy.exc import IntegrityError
+from datetime import datetime
+from app.core.security import hash_password
 
-# Función para buscar un usuario por ID en la BBDD
-def search_user(user_id: int):
-    db = SessionLocal()
-    usuario = db.query(Usuario).filter(Usuario.UsuarioID == user_id).first()
-    db.close()
-    if not usuario:
-        return None
-    return {
-        "idUsuario": usuario.UsuarioID,
-        "nombre": usuario.NombreUsuario,
-        "apellido": usuario.Apellido,
-        "correo": usuario.Email,
-        "fechaRegistro": usuario.FechaRegistro
-    }
-
-# Función para obtener todos los usuarios
-def get_users():
-    db = SessionLocal()
+# Obtener todos los usuarios
+def get_users_list(db: Session):
     usuarios = db.query(Usuario).all()
-    db.close()
     return [
-        {
-            "idUsuario": u.UsuarioID,
-            "nombre": u.NombreUsuario,
-            "apellido": u.Apellido,
-            "correo": u.Email,
-            "fechaRegistro": u.FechaRegistro
-        }
+        UserRead(
+            idUsuario=u.UsuarioID,
+            nombre=u.NombreUsuario,
+            correo=u.Email,
+            fechaRegistro=u.fechaRegistro
+        )
         for u in usuarios
     ]
 
-# Función para crear un nuevo usuario en la BBDD
-def create_user(user: User):
-    db = SessionLocal()
-    # Verificar si el usuario ya existe por correo
-    if db.query(Usuario).filter(Usuario.Email == user.email).first():
-        db.close()
-        raise HTTPException(status_code=400, detail="El usuario ya existe")
-    nuevo_usuario = Usuario(
-        NombreUsuario=user.name,
-        Apellido=user.apellido,
-        Email=user.email,
-        Contrasena=user.password
+# Buscar usuario por ID
+def search_user(db: Session, user_id: int):
+    u = db.query(Usuario).filter(Usuario.UsuarioID == user_id).first()
+    if not u:
+        return None
+    return UserRead(
+        idUsuario=u.UsuarioID,
+        nombre=u.NombreUsuario,
+        correo=u.Email,
+        fechaRegistro=u.fechaRegistro
     )
+
+# Crear usuario
+def create_user(db: Session, user: UserCreate):
+    # Verificar si el correo ya existe
+    if db.query(Usuario).filter(Usuario.Email == user.correo).first():
+        raise HTTPException(status_code=400, detail="El usuario ya existe")
+
+    # Crear instancia del usuario con contraseña hasheada y fecha sin microsegundos
+    nuevo_usuario = Usuario(
+        NombreUsuario=user.nombre,
+        Email=user.correo,
+        ContraseñaHash=hash_password(user.contrasena),
+        fechaRegistro=datetime.now().replace(microsecond=0)  # quitar microsegundos
+    )
+
     db.add(nuevo_usuario)
     try:
         db.commit()
         db.refresh(nuevo_usuario)
     except IntegrityError:
         db.rollback()
-        db.close()
-        raise HTTPException(status_code=400, detail="Error de integridad al crear usuario")
-    db.close()
-    return {
-        "idUsuario": nuevo_usuario.UsuarioID,
-        "nombre": nuevo_usuario.NombreUsuario,
-        "apellido": nuevo_usuario.Apellido,
-        "correo": nuevo_usuario.Email,
-        "fechaRegistro": nuevo_usuario.FechaRegistro
-    }
+        raise HTTPException(status_code=400, detail="Error al crear usuario")
 
-# Función para actualizar un usuario existente en la BBDD
-def update_user(user: User):
-    db = SessionLocal()
-    usuario = db.query(Usuario).filter(Usuario.UsuarioID == user.id).first()
-    if not usuario:
-        db.close()
-        raise HTTPException(status_code=404, detail="Usuario no encontrado")
-    usuario.NombreUsuario = user.name
-    usuario.Apellido = user.apellido
-    usuario.Email = user.email
-    db.commit()
-    db.refresh(usuario)
-    db.close()
-    return {
-        "idUsuario": usuario.UsuarioID,
-        "nombre": usuario.NombreUsuario,
-        "apellido": usuario.Apellido,
-        "correo": usuario.Email
-    }
+    # Retornar usuario sin la contraseña
+    return UserRead(
+        idUsuario=nuevo_usuario.UsuarioID,
+        nombre=nuevo_usuario.NombreUsuario,
+        correo=nuevo_usuario.Email,
+        fechaRegistro=nuevo_usuario.fechaRegistro
+    )
 
-# Función para eliminar un usuario por ID en la BBDD
-def delete_user(user_id: int):
-    db = SessionLocal()
-    usuario = db.query(Usuario).filter(Usuario.UsuarioID == user_id).first()
-    if not usuario:
-        db.close()
+# Actualizar usuario
+def update_user(db: Session, user_id: int, user: UserCreate):
+    u = db.query(Usuario).filter(Usuario.UsuarioID == user_id).first()
+    if not u:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
-    db.delete(usuario)
+    
+    u.NombreUsuario = user.nombre
+    u.Email = user.correo
+    if user.contrasena:
+        u.ContraseñaHash = hash_password(user.contrasena)
+    
     db.commit()
-    db.close()
-    return {"message": "Usuario eliminado"}
+    db.refresh(u)
+    
+    return UserRead(
+        idUsuario=u.UsuarioID,
+        nombre=u.NombreUsuario,
+        correo=u.Email,
+        fechaRegistro=u.fechaRegistro
+    )
+
+# Eliminar usuario
+def delete_user(db: Session, user_id: int):
+    u = db.query(Usuario).filter(Usuario.UsuarioID == user_id).first()
+    if not u:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    
+    db.delete(u)
+    db.commit()

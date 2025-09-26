@@ -16,5 +16,5 @@ class Categoria(Base):
     CategoriaID = Column(Integer, primary_key=True, index=True)
     NombreCategoria = Column(String(50), nullable=False)
     Color = Column(String(20))
-    UsuarioID = Column(Integer, ForeignKey("Usuarios.idUsuario"), nullable=False)
+    UsuarioID = Column(Integer, ForeignKey("Usuarios.UsuarioID"), nullable=False)
     
