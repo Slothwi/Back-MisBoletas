@@ -1,10 +1,3 @@
-"""
-Modelo SQLAlchemy para la tabla Categorias.
-
-Define categorías para organizar productos
-
-"""
-
 from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship
 from app.db.session import Base

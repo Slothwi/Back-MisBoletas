@@ -1,17 +1,6 @@
 """
 Modelo SQLAlchemy para la tabla Documentos.
-
-Define documentos adjuntos a productos:
-- Archivos: boletas, garantías, manuales, fotos
-- Metadata: tipo de archivo, ruta de almacenamiento  
-- Relación: cada documento pertenece a un producto específico
-
-Casos de uso:
-- Guardar boleta de compra (PDF/imagen)
-- Almacenar garantía extendida
-- Adjuntar manual de usuario
-- Fotos del producto
-
+Define documentos adjuntos a productos
 """
 
 from sqlalchemy import Column, Integer, String, ForeignKey

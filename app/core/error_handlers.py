@@ -1,21 +1,44 @@
 """
-Manejadores de errores para la aplicación MisBoletas.
-
-¿Qué hace esto?
-Cuando algo sale mal en la API (error de BD, validación, etc.),
-estos manejadores "atrapan" el error y devuelven una respuesta HTTP amigable.
-
-Solo llamar setup_exception_handlers(app) en main.py
+estos manejadores atrapan el error y devuelven una respuesta HTTP amigable.
 """
 
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import JSONResponse
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.exc import SQLAlchemyError, IntegrityError, OperationalError
 from pydantic import ValidationError
 import logging
-from .exceptions import handle_database_error
 
 logger = logging.getLogger(__name__)
+
+def handle_database_error(error: Exception) -> HTTPException:
+
+    logger.error(f"Error de base de datos: {str(error)}")
+    
+    if isinstance(error, IntegrityError):
+        # Error de integridad (unique constraint, foreign key, etc.)
+        if "UNIQUE constraint failed" in str(error) or "duplicate key" in str(error).lower():
+            return HTTPException(status_code=409, detail="El recurso ya existe")
+        elif "foreign key" in str(error).lower():
+            return HTTPException(status_code=422, detail="Referencia inválida a otro recurso")
+        else:
+            return HTTPException(status_code=422, detail="Error de integridad de datos")
+    
+    elif isinstance(error, OperationalError):
+        # Error operacional (conexión, sintaxis, etc.)
+        if "no such table" in str(error).lower():
+            return HTTPException(status_code=500, detail="Tabla no encontrada en la base de datos")
+        elif "database is locked" in str(error).lower():
+            return HTTPException(status_code=500, detail="Base de datos temporalmente no disponible")
+        else:
+            return HTTPException(status_code=500, detail="Error de conexión a la base de datos")
+    
+    elif isinstance(error, SQLAlchemyError):
+        # Otros errores de SQLAlchemy
+        return HTTPException(status_code=500, detail="Error interno de base de datos")
+    
+    else:
+        # Error genérico
+        return HTTPException(status_code=500, detail="Error interno del servidor")
 
 def setup_exception_handlers(app: FastAPI):
 
@@ -100,11 +123,10 @@ def setup_exception_handlers(app: FastAPI):
             status_code=500,
             content={
                 "error": "Error interno del servidor",
-                "message": "Algo salió mal. Por favor contacta al administrador.",
+                "message": "Algo salió mal.",
                 "type": error_type,
                 "path": url
             }
         )
     
     logger.info(" Manejadores de errores configurados")
-    logger.info(" Los errores ahora se mostrarán de forma amigable")

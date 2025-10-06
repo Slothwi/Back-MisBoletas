@@ -1,6 +1,4 @@
 """
-Configuración central de la aplicación MisBoletas.
-
 Este archivo lee las variables de entorno del archivo .env
 y las hace disponibles para toda la aplicación.
 """
@@ -14,13 +12,15 @@ class Settings(BaseSettings):
     """
     
     # === CONFIGURACIÓN DE BASE DE DATOS ===
-    SQLSERVER_SERVER: str      # Servidor SQL Server (ej: localhost)
+    SQLSERVER_SERVER: str      # Servidor SQL Server
     SQLSERVER_DATABASE: str    # Nombre de la base de datos
     SQLSERVER_USERNAME: str    # Usuario de BD
     SQLSERVER_PASSWORD: str    # Contraseña de BD
     
     # === CONFIGURACIÓN DE SEGURIDAD ===
-    SECRET_KEY: str = "mi-clave-super-secreta-cambiar-en-produccion"
+    SECRET_KEY: str                           # DESDE .ENV
+    JWT_ALGORITHM: str = "HS256"              # Algoritmo JWT
+    JWT_EXPIRE_MINUTES: int = 30              # Minutos de expiración del token
     
     # === CONFIGURACIÓN DE LA APP ===
     DEBUG: bool = True                    # Modo debug para desarrollo

@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from app.schemas.categoria import Categoria
+from app.schemas.categorias import Categoria
 from app.crud import categorias as crud_categoria
 
 router = APIRouter()

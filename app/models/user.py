@@ -1,9 +1,6 @@
 """
 Modelo SQLAlchemy para la tabla Usuarios.
-
 Define la estructura de usuarios del sistema MisBoletas
-
-Tabla: Usuarios
 """
 
 from sqlalchemy import Column, Integer, String

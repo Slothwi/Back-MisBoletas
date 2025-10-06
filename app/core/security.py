@@ -9,9 +9,9 @@ from .config import settings
 # Configuración para hash de contraseñas (bcrypt es muy seguro)
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-# Configuración para tokens JWT
-ALGORITHM = "HS256"  # Algoritmo de encriptación
-ACCESS_TOKEN_EXPIRE_MINUTES = 30  # Tokens válidos por 30 minutos
+# Configuración para tokens JWT - AHORA DESDE CONFIG
+ALGORITHM = settings.JWT_ALGORITHM
+ACCESS_TOKEN_EXPIRE_MINUTES = settings.JWT_EXPIRE_MINUTES
 
 # === FUNCIONES DE CONTRASEÑAS ===
 
