@@ -8,29 +8,37 @@ from sqlalchemy.orm import relationship
 from app.db.session import Base
 
 class Producto(Base):
-    __tablename__ = "Productos"
+    __tablename__ = "productos"
     
     # Clave Primaria Autoincremental
-    ProductoID = Column(Integer, primary_key=True, index=True)
+    productoid = Column(Integer, primary_key=True, index=True)
     
     # Campos de datos
-    NombreProducto = Column(String(255), nullable=False)     
-    FechaCompra = Column(Date)
-    DuracionGarantia = Column(Integer)
-    Marca = Column(String(100))                              
-    Modelo = Column(String(100))                            
-    Tienda = Column(String(255))                          
-    Notas = Column(Text)                                    
+    nombreproducto = Column(String(150), nullable=False)     
+    fechacompra = Column(Date)
+    duraciongarantia = Column(Integer)
+    marca = Column(String(100))                              
+    modelo = Column(String(100))                            
+    tienda = Column(String(100))                          
+    notas = Column(Text)                                    
     
     # Clave Foránea al Usuario
-    UsuarioID = Column(Integer, ForeignKey("Usuarios.UsuarioID"), nullable=False)
+    usuarioid = Column(Integer, ForeignKey("usuarios.usuarioid", ondelete="CASCADE"), nullable=False)
     
     # Relaciones (Relationships)
     # Relación uno-a-muchos: El producto pertenece a un solo usuario
     usuario = relationship("Usuario", back_populates="productos")
     
     # Relación uno-a-muchos: Un producto tiene múltiples documentos (boletas, garantías)
-    documentos = relationship("Documento", back_populates="producto")
+    documentos = relationship(
+        "Documento",
+        back_populates="producto",
+        cascade="all, delete-orphan"
+    )
     
-    # Relación muchos-a-muchos: Un producto puede tener múltiples categorías
-    categorias = relationship("Categoria", secondary="ProductoCategorias", back_populates="productos")
+    # Relación uno-a-muchos: Un producto puede tener múltiples categorías
+    categorias = relationship(
+        "Categoria",
+        back_populates="producto",
+        cascade="all, delete-orphan"
+    )

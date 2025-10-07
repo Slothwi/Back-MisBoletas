@@ -9,23 +9,18 @@ from sqlalchemy.sql import func # Necesario para la función NOW() de la base de
 from app.db.session import Base
 
 class Usuario(Base):
-    # Relación con la tabla Productos (un usuario puede tener muchos productos)
-    productos = relationship("Producto", back_populates="usuario")
-    
-    __tablename__ = "Usuarios"
+    __tablename__ = "usuarios"
 
-    UsuarioID = Column(Integer, primary_key=True, index=True)
-    NombreUsuario = Column(String(50), nullable=False)
-    
-    # Email debe ser único y con límite de 100 caracteres
-    Email = Column(String(100), unique=True, nullable=False)
-    
-    # Contraseña en Hash (256 es estándar para SHA-256)
-    ContraseñaHash = Column(String(256), nullable=False)
-    
-    # La columna ya no es nullable, ya que tendrá un valor por defecto.
-    FechaRegistro = Column(
-        DateTime(timezone=False), # Usamos DateTime
-        default=func.now(),       # Función NOW() de PostgreSQL
-        nullable=False
+    # Columnas principales
+    usuarioid = Column(Integer, primary_key=True, index=True)
+    nombreusuario = Column(String(100), nullable=False)
+    email = Column(String(150), unique=True, nullable=False)
+    contrasenahash = Column(String, nullable=False)
+    fecharegistro = Column(DateTime(timezone=True), server_default=func.now())
+
+    # Relaciones
+    productos = relationship(
+        "Producto",
+        back_populates="usuario",
+        cascade="all, delete-orphan"
     )

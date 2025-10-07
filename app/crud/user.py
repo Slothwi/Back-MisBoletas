@@ -9,19 +9,20 @@ from app.core.security import hash_password
 
 # ===== FUNCIONES ESENCIALES PARA LOGIN/REGISTER =====
 
-# Crear usuario usando SP (para REGISTER)
+# Crear usuario usando función PostgreSQL (para REGISTER)
 def create_user(db: Session, user: UserCreate):
     try:
         # Hash de la contraseña
         hashed_password = hash_password(user.contrasena)
         
-        # Ejecutar stored procedure para crear usuario
+        # Ejecutar función PostgreSQL para crear usuario
         result = db.execute(
             text("""
-                EXEC sp_CreateUser 
-                @NombreUsuario = :nombre, 
-                @Email = :email, 
-                @ContraseñaHash = :password
+                SELECT * FROM fn_createuser(
+                    :nombre, 
+                    :email, 
+                    :password
+                )
             """),
             {
                 "nombre": user.nombre,
@@ -40,10 +41,10 @@ def create_user(db: Session, user: UserCreate):
             raise HTTPException(status_code=400, detail="Error al crear usuario")
             
         return UserRead(
-            idUsuario=created_user.UsuarioID,
-            nombre=created_user.NombreUsuario,
-            correo=created_user.Email,
-            fechaRegistro=created_user.FechaRegistro
+            idUsuario=created_user.usuarioid,
+            nombre=created_user.nombreusuario,
+            correo=created_user.email,
+            fechaRegistro=created_user.fecharegistro
         )
         
     except Exception as e:
@@ -53,35 +54,44 @@ def create_user(db: Session, user: UserCreate):
             raise HTTPException(status_code=400, detail="El email ya está registrado")
         raise HTTPException(status_code=500, detail=f"Error al crear usuario: {error_message}")
 
-# Buscar usuario para login usando SP (para AUTENTICACIÓN)
+# Buscar usuario para login usando función PostgreSQL
 def get_user_for_login(db: Session, email: str):
     try:
-        result = db.execute(text("EXEC sp_GetUserForLogin @Email = :email"), 
-                                {"email": email})
+        result = db.execute(
+            text("""
+                SELECT * FROM fn_getuserforlogin(:email)
+            """),
+            {"email": email}
+        )
         user = result.fetchone()
         
         if not user:
             return None
             
         return {
-            "idUsuario": user.UsuarioID,
-            "nombre": user.NombreUsuario,
-            "correo": user.Email,
-            "contrasenaHash": user.ContraseñaHash,
-            "fechaRegistro": user.FechaRegistro
+            "idUsuario": user.usuarioid,
+            "nombre": user.nombreusuario,
+            "correo": user.email,
+            "contrasenaHash": user.contrasenahash,
+            "fechaRegistro": user.fecharegistro
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error en autenticación: {str(e)}")
 
-# Cambiar contraseña usando SP (para RECUPERAR CONTRASEÑA)
+# Cambiar contraseña usando función PostgreSQL
 def update_user_password(db: Session, user_id: int, new_password: str):
     try:
         # Hash de la nueva contraseña
         hashed_password = hash_password(new_password)
         
-        # Ejecutar stored procedure para cambiar contraseña
+        # Ejecutar función PostgreSQL para cambiar contraseña
         result = db.execute(
-            text("EXEC sp_UpdateUserPassword @UsuarioID = :user_id, @NuevaContraseñaHash = :password"),
+            text("""
+                SELECT * FROM fn_updateuserpassword(
+                    :user_id, 
+                    :password
+                )
+            """),
             {
                 "user_id": user_id,
                 "password": hashed_password
@@ -95,10 +105,10 @@ def update_user_password(db: Session, user_id: int, new_password: str):
             raise HTTPException(status_code=404, detail="Usuario no encontrado")
             
         return UserRead(
-            idUsuario=updated_user.UsuarioID,
-            nombre=updated_user.NombreUsuario,
-            correo=updated_user.Email,
-            fechaRegistro=updated_user.FechaRegistro
+            idUsuario=updated_user.usuarioid,
+            nombre=updated_user.nombreusuario,
+            correo=updated_user.email,
+            fechaRegistro=updated_user.fecharegistro
         )
         
     except Exception as e:
@@ -106,85 +116,100 @@ def update_user_password(db: Session, user_id: int, new_password: str):
         error_message = str(e)
         if "no encontrado" in error_message:
             raise HTTPException(status_code=404, detail="Usuario no encontrado")
-        raise HTTPException(status_code=500, detail=f"Error al cambiar contraseña: {error_message}")
+        raise HTTPException(status_code=500, detail=f"Error al actualizar contraseña: {error_message}")
 
-# Eliminar cuenta usando SP (para ELIMINAR CUENTA)
-def delete_user_account(db: Session, user_id: int):
+# Eliminar usuario y sus datos relacionados
+def delete_user(db: Session, user_id: int):
     try:
-        # Ejecutar stored procedure para eliminar cuenta completa
-        result = db.execute(
-            text("EXEC sp_DeleteUserAccount @UsuarioID = :user_id"),
-            {"user_id": user_id}
-        )
+        # Buscar el usuario
+        user = db.query(Usuario).filter(Usuario.usuarioid == user_id).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="Usuario no encontrado")
         
-        response = result.fetchone()
+        # Eliminar el usuario y todos sus datos relacionados (cascada)
+        db.delete(user)
         db.commit()
         
-        if response and response.Mensaje:
-            return {"message": response.Mensaje}
-        else:
-            return {"message": "Cuenta eliminada exitosamente"}
-            
     except Exception as e:
         db.rollback()
-        error_message = str(e)
-        if "no encontrado" in error_message:
-            raise HTTPException(status_code=404, detail="Usuario no encontrado")
-        raise HTTPException(status_code=500, detail=f"Error al eliminar cuenta: {error_message}")
-
-# ===== FUNCIONES DE TESTING (SQLAlchemy directo) =====
-
-# Obtener todos los usuarios (solo para testing)
+        raise HTTPException(status_code=500, detail=f"Error al eliminar usuario: {str(e)}")
+        
+# Obtener lista de usuarios (para administración)
 def get_users_list(db: Session):
-    usuarios = db.query(Usuario).all()
-    return [
-        UserRead(
-            idUsuario=u.UsuarioID,
-            nombre=u.NombreUsuario,
-            correo=u.Email,
-            fechaRegistro=u.fechaRegistro
+    try:
+        # Ejecutar consulta directa para obtener todos los usuarios
+        result = db.execute(
+            text("""
+                SELECT 
+                    usuarioid, 
+                    nombreusuario, 
+                    email, 
+                    fecharegistro 
+                FROM usuarios 
+                ORDER BY fecharegistro DESC
+            """)
         )
-        for u in usuarios
-    ]
+        users = result.fetchall()
+        
+        if not users:
+            return []
+            
+        # Convertir los resultados a la estructura esperada
+        return [
+            UserRead(
+                idUsuario=user.usuarioid,
+                nombre=user.nombreusuario,
+                correo=user.email,
+                fechaRegistro=user.fecharegistro
+            ) for user in users
+        ]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al obtener usuarios: {str(e)}")
 
-# Buscar usuario por ID (solo para testing)
+# Buscar usuario por ID
 def search_user(db: Session, user_id: int):
-    u = db.query(Usuario).filter(Usuario.UsuarioID == user_id).first()
-    if not u:
-        return None
-    return UserRead(
-        idUsuario=u.UsuarioID,
-        nombre=u.NombreUsuario,
-        correo=u.Email,
-        fechaRegistro=u.fechaRegistro
-    )
+    try:
+        result = db.execute(
+            text("""
+                SELECT usuarioid, nombreusuario, email, fecharegistro 
+                FROM usuarios 
+                WHERE usuarioid = :user_id
+            """),
+            {"user_id": user_id}
+        )
+        user = result.fetchone()
+        if not user:
+            return None
+        return UserRead(
+            idUsuario=user.usuarioid,
+            nombre=user.nombreusuario,
+            correo=user.email,
+            fechaRegistro=user.fecharegistro
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al buscar usuario: {str(e)}")
 
-# Actualizar usuario (solo para testing)
+# Actualizar datos de usuario
 def update_user(db: Session, user_id: int, user: UserCreate):
-    u = db.query(Usuario).filter(Usuario.UsuarioID == user_id).first()
-    if not u:
-        raise HTTPException(status_code=404, detail="Usuario no encontrado")
-    
-    u.NombreUsuario = user.nombre
-    u.Email = user.correo
-    if user.contrasena:
-        u.ContraseñaHash = hash_password(user.contrasena)
-    
-    db.commit()
-    db.refresh(u)
-    
-    return UserRead(
-        idUsuario=u.UsuarioID,
-        nombre=u.NombreUsuario,
-        correo=u.Email,
-        fechaRegistro=u.fechaRegistro
-    )
-
-# Eliminar usuario (solo para testing)
-def delete_user(db: Session, user_id: int):
-    u = db.query(Usuario).filter(Usuario.UsuarioID == user_id).first()
-    if not u:
-        raise HTTPException(status_code=404, detail="Usuario no encontrado")
-    
-    db.delete(u)
-    db.commit()
+    try:
+        u = db.query(Usuario).filter(Usuario.usuarioid == user_id).first()
+        if not u:
+            raise HTTPException(status_code=404, detail="Usuario no encontrado")
+        
+        u.nombreusuario = user.nombre
+        u.email = user.correo
+        if user.contrasena:
+            u.contrasenahash = hash_password(user.contrasena)
+        
+        db.commit()
+        db.refresh(u)
+        
+        return UserRead(
+            idUsuario=u.usuarioid,
+            nombre=u.nombreusuario,
+            correo=u.email,
+            fechaRegistro=u.fecharegistro
+        )
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Error al actualizar usuario: {str(e)}")
