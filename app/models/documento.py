@@ -10,10 +10,18 @@ from app.db.session import Base
 class Documento(Base):
     __tablename__ = "Documentos"
     
+    # Clave Primaria Autoincremental
     DocumentoID = Column(Integer, primary_key=True, index=True)
+    
+    # Campos de datos
     RutaArchivo = Column(String(255), nullable=False)
     TipoArchivo = Column(String(10))
-    ProductoID = Column(Integer, ForeignKey("Productos.ProductoID"), nullable=False)
+    
+    # Clave Foránea a Producto
+    # Se añade ON DELETE CASCADE para asegurar que los documentos se eliminen 
+    # si el producto padre es eliminado.
+    ProductoID = Column(Integer, ForeignKey("Productos.ProductoID", ondelete='CASCADE'), nullable=False)
     
     # Relaciones
+    # Relación uno-a-uno (o uno-a-muchos si se permite compartir)
     producto = relationship("Producto", back_populates="documentos")
