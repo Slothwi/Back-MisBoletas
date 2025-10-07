@@ -11,11 +11,17 @@ Modelos incluidos:
 - Categoria: Categorías para organizar productos  
 - Producto: Productos con garantías y documentos
 - Documento: Archivos adjuntos (boletas, garantías, etc.)
-- ProductoCategorias: Relación many-to-many productos-categorías
-
+- productocategorias: Relación many-to-many productos-categorías
 """
 
 from app.db.session import Base
+from app.models.user import Usuario
+from app.models.categoria import Categoria
+from app.models.producto import Producto
+from app.models.documento import Documento
+
+# Importar los modelos para que SQLAlchemy los detecte
+# No se necesita hacer nada más aquí, solo importar
 
 # Importar todos los modelos aquí para que Alembic los detecte
 from app.models.user import Usuario
