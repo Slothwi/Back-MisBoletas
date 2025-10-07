@@ -5,7 +5,7 @@ from app.core.config import settings
 from typing import Generator
 
 # Usamos directamente la DATABASE_URL que es leída desde Render
-SQLALCHEMY_DATABASE_URL = settings.DATABASE_URL
+SQLALCHEMY_DATABASE_URL = settings.SQLALCHEMY_DATABASE_URL
 
 # Crear el motor de SQLAlchemy con SSL
 engine = create_engine(
