@@ -12,11 +12,8 @@ class Settings(BaseSettings):
     """
     
     # === CONFIGURACIÓN DE BASE DE DATOS ===
-    SQLSERVER_SERVER: str      # Servidor SQL Server
-    SQLSERVER_DATABASE: str    # Nombre de la base de datos
-    SQLSERVER_USERNAME: str    # Usuario de BD
-    SQLSERVER_PASSWORD: str    # Contraseña de BD
-    
+    DATABASE_URL: str                     # DESDE .ENV
+
     # === CONFIGURACIÓN DE SEGURIDAD ===
     SECRET_KEY: str                           # DESDE .ENV
     JWT_ALGORITHM: str = "HS256"              # Algoritmo JWT
