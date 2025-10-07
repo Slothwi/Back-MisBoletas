@@ -11,6 +11,9 @@ def create_tables():
     Se ejecuta al iniciar el servidor (on_startup).
     """
     print("Intentando crear tablas en la base de datos...")
+
+    """Importar Modelos para que Base.metadata los conozca"""
+    from app.models import user, categoria, producto, documento, producto_categoria
     # Base.metadata contiene la definición de todas tus clases modelo
     Base.metadata.create_all(bind=engine)
     print("Tablas creadas exitosamente o ya existentes.")

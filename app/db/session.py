@@ -16,20 +16,11 @@ from sqlalchemy.orm import sessionmaker
 from app.core.config import settings
 from typing import Generator
 
-# IMPORTA TUS MODELOS AQUÍ PARA QUE Base.metadata LOS CONOZCA
-# (Asegúrate de que estos paths sean correctos)
-import app.models.user
-import app.models.categoria
-import app.models.producto
-import app.models.documento
-import app.models.producto_categoria
 
-# Usamos directamente la DATABASE_URL que es leída desde las variables de entorno de Render
+# Usamos directamente la DATABASE_URL que es leída  Render
 SQLALCHEMY_DATABASE_URL = settings.DATABASE_URL
 
 # Crear el motor de SQLAlchemy
-# pool_pre_ping=True ayuda a manejar mejor las conexiones inactivas 
-# y evitar errores de desconexión en entornos de nube como Render.
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL, 
     pool_pre_ping=True,
@@ -49,5 +40,4 @@ def get_db() -> Generator:
     try:
         yield db
     finally:
-        # Asegura que la sesión se cierre después de cada solicitud
         db.close()
