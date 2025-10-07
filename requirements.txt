@@ -23,6 +23,7 @@ sqlalchemy==2.0.43
 pyodbc==5.2.0
 alembic==1.16.5
 psycopg[binary,pool]==3.2.3
+psycopg2-binary>=2.9
 
 # Dependencias para configuración centralizada (Pydantic v2)
 pydantic-settings==2.10.1
