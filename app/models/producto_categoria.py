@@ -1,16 +1,3 @@
-"""
-Tabla de asociación many-to-many entre Productos y Categorías.
-
-Permite relaciones flexibles donde:
-- Un producto puede pertenecer a múltiples categorías
-- Una categoría puede contener múltiples productos
-
-Ejemplos de uso:
-- Producto "iPhone" en categorías: "Electrónicos", "Celulares", "Apple"  
-- Producto "Cafetera" en categorías: "Electrodomésticos", "Cocina"
-
-"""
-
 from sqlalchemy import Table, Column, Integer, ForeignKey
 from app.db.session import Base
 

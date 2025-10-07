@@ -12,29 +12,25 @@ Este módulo maneja:
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-import os
-from dotenv import load_dotenv
+from app.core.config import settings
 
-load_dotenv()
-
-# Configuración de la base de datos SQL Server
-SQLSERVER_SERVER = os.getenv("SQLSERVER_SERVER", "localhost")
-SQLSERVER_DATABASE = os.getenv("SQLSERVER_DATABASE", "MisBoletas")
-SQLSERVER_USERNAME = os.getenv("SQLSERVER_USERNAME", "")
-SQLSERVER_PASSWORD = os.getenv("SQLSERVER_PASSWORD", "")
+# Configuración de la base de datos SQL Server usando settings de Pydantic
+SQLSERVER_SERVER = settings.SQLSERVER_SERVER
+SQLSERVER_DATABASE = settings.SQLSERVER_DATABASE
+SQLSERVER_USERNAME = settings.SQLSERVER_USERNAME
+SQLSERVER_PASSWORD = settings.SQLSERVER_PASSWORD
 
 # Validar que las variables críticas estén configuradas
 if not SQLSERVER_USERNAME or not SQLSERVER_PASSWORD:
     raise ValueError(
         "ERROR: Variables de entorno faltantes!\n"
-        "Crea un archivo .env con:\n"
+        "Configura las variables en tu archivo .env o en settings.\n"
         "SQLSERVER_USERNAME=tu_usuario\n"
         "SQLSERVER_PASSWORD=tu_contraseña\n"
         "Ver .env.example para más detalles."
     )
 
 # Cadena de conexión para SQL Server con driver ODBC
-# Formato: mssql+pyodbc://usuario:contraseña@servidor:puerto/basedatos?driver=ODBC+Driver+17+for+SQL+Server
 DATABASE_URL = f"mssql+pyodbc://{SQLSERVER_USERNAME}:{SQLSERVER_PASSWORD}@{SQLSERVER_SERVER}:1433/{SQLSERVER_DATABASE}?driver=ODBC+Driver+17+for+SQL+Server"
 
 # Crear el motor de SQLAlchemy (sin crear tablas automáticamente)
@@ -50,6 +46,6 @@ Base = declarative_base()
 def get_db():
     db = SessionLocal()
     try:
-        yield db  # yield solo nos da acceso a una sesion de base de datos, y garantiza que no tengamos varias abiertas al mismo tiempo
+        yield db
     finally:
         db.close()
