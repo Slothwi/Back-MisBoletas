@@ -12,7 +12,9 @@ class Settings(BaseSettings):
     """
     
     # === CONFIGURACIÓN DE BASE DE DATOS ===
-    DATABASE_URL: str                     # DESDE .ENV
+    DATABASE_URL: str                     # DESDE .ENV (Render la proporciona)
+    EXTERNAL_DATABASE_URL: str = None  # DESDE .ENV (opcional, para conexiones externas)
+    ENV: str = "local"                # local
 
     # === CONFIGURACIÓN DE SEGURIDAD ===
     SECRET_KEY: str                           # DESDE .ENV
@@ -24,6 +26,16 @@ class Settings(BaseSettings):
     API_PREFIX: str = "/api"              # Prefijo para todas las rutas
     ALLOW_ORIGIN: str = "*"               # Orígenes permitidos para CORS
 
+    @property
+    def SQLALCHEMY_DATABASE_URL(self):
+        """
+        Devuelve la URL que debe usar SQLAlchemy según el entorno:
+        - local -> EXTERNAL_DATABASE_URL
+        - render -> DATABASE_URL
+        """
+        if self.ENV == "render":
+            return self.DATABASE_URL
+        return self.EXTERNAL_DATABASE_URL
     class Config:
         # Archivo donde están las variables de entorno
         env_file = ".env"
