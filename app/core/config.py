@@ -4,6 +4,7 @@ y las hace disponibles para toda la aplicación.
 """
 
 from pydantic_settings import BaseSettings
+from typing import Optional
 
 class Settings(BaseSettings):
     """
@@ -13,7 +14,7 @@ class Settings(BaseSettings):
     
     # === CONFIGURACIÓN DE BASE DE DATOS ===
     DATABASE_URL: str                     # DESDE .ENV (Render la proporciona)
-    EXTERNAL_DATABASE_URL: str = None  # DESDE .ENV (opcional, para conexiones externas)
+    EXTERNAL_DATABASE_URL: Optional[str] = None  # DESDE .ENV (opcional, para conexiones externas)
     ENV: str = "local"                # local
 
     # === CONFIGURACIÓN DE SEGURIDAD ===
@@ -27,7 +28,7 @@ class Settings(BaseSettings):
     ALLOW_ORIGIN: str = "*"               # Orígenes permitidos para CORS
 
     @property
-    def SQLALCHEMY_DATABASE_URL(self):
+    def SQLALCHEMY_DATABASE_URL(self) -> str:
         """
         Devuelve la URL que debe usar SQLAlchemy según el entorno:
         - local -> EXTERNAL_DATABASE_URL
