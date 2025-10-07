@@ -18,10 +18,11 @@ uvicorn==0.35.0
 watchfiles==1.1.0
 websockets==15.0.1
 
-# Dependencias para base de datos SQL Server
+# Dependencias para base de datos SQL Server & PostgreSQL (Render)
 sqlalchemy==2.0.43
 pyodbc==5.2.0
 alembic==1.16.5
+psycopg2-binary==2.9.9
 
 # Dependencias para configuración centralizada (Pydantic v2)
 pydantic-settings==2.10.1
