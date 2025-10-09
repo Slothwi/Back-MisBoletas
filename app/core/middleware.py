@@ -24,10 +24,10 @@ def add_cors_middleware(app: FastAPI):
     """
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],           # Cambiar en producción
-        allow_credentials=True,         # Permite cookies/auth
-        allow_methods=["GET", "POST", "PUT", "DELETE"],  # Métodos HTTP permitidos
-        allow_headers=["*"],           # Headers permitidos
+        allow_origins=["*"],
+        allow_credentials=True,
+        allow_methods=["GET", "POST", "PUT", "DELETE"],
+        allow_headers=["*"],
     )
     logger.info(" CORS configurado - Frontend puede conectarse")
 
@@ -38,11 +38,8 @@ def add_logging_middleware(app: FastAPI):
     
     @app.middleware("http")
     async def log_requests(request: Request, call_next: Callable):
-        # Registrar cuando llega el request
+        # Solo loggear errores y requests importantes en producción
         start_time = time.time()
-        client_ip = request.client.host if request.client else "unknown"
-        
-        logger.info(f" {request.method} {request.url.path} desde {client_ip}")
         
         try:
             # Procesar el request
@@ -51,21 +48,24 @@ def add_logging_middleware(app: FastAPI):
             # Calcular cuánto tiempo tardó
             duration = time.time() - start_time
             
-            # Registrar la respuesta
-            logger.info(
-                f" {request.method} {request.url.path} → "
-                f" Status {response.status_code} en {duration:.3f}s"
-            )
+            # Solo log para requests lentos (>1s) o errores
+            if duration > 1.0 or response.status_code >= 400:
+                client_ip = request.client.host if request.client else "unknown"
+                logger.warning(
+                    f"⚠️ {request.method} {request.url.path} → "
+                    f"Status {response.status_code} en {duration:.3f}s desde {client_ip}"
+                )
             
-            # Agregar tiempo al header (útil para debugging)
+            # Agregar tiempo al header
             response.headers["X-Process-Time"] = f"{duration:.3f}"
             return response
             
         except Exception as error:
             duration = time.time() - start_time
+            client_ip = request.client.host if request.client else "unknown"
             logger.error(
-                f"{request.method} {request.url.path} → "
-                f"ERROR: {str(error)} en {duration:.3f}s"
+                f"❌ {request.method} {request.url.path} → "
+                f"ERROR: {str(error)} en {duration:.3f}s desde {client_ip}"
             )
             raise  # Re-lanzar el error
 
@@ -76,9 +76,9 @@ def add_security_middleware(app: FastAPI):
     app.add_middleware(
         TrustedHostMiddleware, 
         allowed_hosts=[
-            "localhost",     # Desarrollo local
-            "127.0.0.1",     # Desarrollo local
-            "*"              # Temporalmente permite todo - cambiar en producción
+            "localhost",
+            "127.0.0.1",
+            "*"
         ]
     )
     logger.info(" Hosts de seguridad configurados")

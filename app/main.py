@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from app.api.v1 import user, product
+from app.api.v1 import user, product, categorias
 from app.core.middleware import setup_middleware
 from app.core.error_handlers import setup_exception_handlers
 
@@ -17,8 +17,9 @@ setup_middleware(app)
 setup_exception_handlers(app)
 
 # Registrar routers de endpoints ESENCIALES
-app.include_router(user.router, prefix="/api/v1", tags=["Usuarios"])
-app.include_router(product.router, prefix="/api/v1", tags=["Productos"])
+app.include_router(user.router, prefix="/api/v1/users", tags=["Usuarios"])
+app.include_router(product.router, prefix="/api/v1/products", tags=["Productos"])
+app.include_router(categorias.router, prefix="/api/v1/categorias", tags=["Categorías"])
 
 @app.get("/")
 

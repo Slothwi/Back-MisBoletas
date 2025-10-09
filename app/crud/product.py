@@ -1,14 +1,12 @@
-from app.schemas.product import Product, ProductRead
-from app.models.producto import Producto
+from app.schemas.product import ProductRead
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 from fastapi import HTTPException
-from datetime import date
 
 # ===== FUNCIÓN HELPER PARA ELIMINAR REPETICIÓN =====
-def _convert_to_product_schema(row) -> Product:
-    """Convierte una fila de BD a Product schema."""
-    return Product(
+def _convert_to_product_schema(row) -> ProductRead:
+    """Convierte una fila de BD a ProductRead schema."""
+    return ProductRead(
         ProductoID=row.ProductoID,
         NombreProducto=row.NombreProducto,
         FechaCompra=row.FechaCompra,
@@ -20,7 +18,7 @@ def _convert_to_product_schema(row) -> Product:
         UsuarioID=row.UsuarioID
     )
 
-def check_product_ownership(product: Product, user_id: int):
+def check_product_ownership(product: ProductRead, user_id: int):
     """Verifica que el producto pertenezca al usuario"""
     if product.UsuarioID != user_id:
         raise HTTPException(status_code=403, detail="No tienes permiso para acceder a este producto")
@@ -57,7 +55,7 @@ def get_products_by_user(db: Session, user_id: int):
         raise HTTPException(status_code=500, detail=f"Error al obtener productos del usuario: {str(e)}")
 
 # Crear producto usando SP
-def create_product_wrapper(db: Session, product: Product):
+def create_product_wrapper(db: Session, product: ProductRead):
     try:
         result = db.execute(
             text("""
@@ -96,7 +94,7 @@ def create_product_wrapper(db: Session, product: Product):
         raise HTTPException(status_code=500, detail=f"Error al crear producto: {str(e)}")
 
 # Actualizar producto usando SP (verificación de ownership en SP)
-def update_product(db: Session, product: Product):
+def update_product(db: Session, product: ProductRead):
     try:
         result = db.execute(
             text("""

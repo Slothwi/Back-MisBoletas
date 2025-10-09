@@ -11,7 +11,7 @@ from app.core.security import hash_password, verify_password, create_access_toke
 router = APIRouter()
 
 # Obtener todos los usuarios
-@router.get("/users", response_model=List[UserRead])
+@router.get("/", response_model=List[UserRead])
 async def get_users(db: Session = Depends(get_db)):
     """Obtiene la lista completa de usuarios registrados."""
     usuarios = crud_user.get_users_list(db)
@@ -20,7 +20,7 @@ async def get_users(db: Session = Depends(get_db)):
     return usuarios
 
 # Obtener un usuario por ID
-@router.get("/users/{user_id}", response_model=UserRead)
+@router.get("/{user_id}", response_model=UserRead)
 async def get_user(user_id: int, db: Session = Depends(get_db)):
     """Obtiene la información de un usuario específico por ID."""
     usuario = crud_user.search_user(db, user_id)
@@ -28,14 +28,14 @@ async def get_user(user_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
     return usuario
 
-# Crear un usuario nuevo
-@router.post("/users", response_model=UserRead, status_code=201)
+# Crear un usuario nuevo (REGISTER)
+@router.post("/register", response_model=UserRead, status_code=201)
 async def create_user(user: UserCreate, db: Session = Depends(get_db)):
     """Registra un nuevo usuario en el sistema."""
     return crud_user.create_user(db, user)
 
 # LOGIN - Autenticar usuario
-@router.post("/auth/login", response_model=LoginResponse)
+@router.post("/login", response_model=LoginResponse)
 async def login(user_credentials: UserLogin, db: Session = Depends(get_db)):
     """Autentica un usuario y genera un token de acceso."""
     try:
@@ -74,13 +74,13 @@ async def login(user_credentials: UserLogin, db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail=f"Error interno en el login: {str(e)}")
 
 # Actualizar un usuario existente
-@router.put("/users/{user_id}", response_model=UserRead)
+@router.put("/{user_id}", response_model=UserRead)
 async def update_user(user_id: int, user: UserCreate, db: Session = Depends(get_db)):
     """Actualiza la información de un usuario existente."""
     return crud_user.update_user(db, user_id, user)
 
 # Eliminar un usuario
-@router.delete("/users/{user_id}", status_code=204)
+@router.delete("/{user_id}", status_code=204)
 async def delete_user(user_id: int, db: Session = Depends(get_db)):
     """Elimina un usuario del sistema."""
     crud_user.delete_user(db, user_id)
@@ -89,7 +89,7 @@ async def delete_user(user_id: int, db: Session = Depends(get_db)):
 # ===== ENDPOINTS ESENCIALES PARA GESTIÓN DE CUENTA =====
 
 # Cambiar contraseña del usuario actual
-@router.put("/auth/change-password", response_model=UserRead)
+@router.put("/change-password", response_model=UserRead)
 async def change_password(
     password_data: PasswordChangeRequest,
     db: Session = Depends(get_db),
@@ -108,7 +108,7 @@ async def change_password(
         raise HTTPException(status_code=500, detail=f"Error al cambiar contraseña: {str(e)}")
 
 # Eliminar cuenta del usuario actual
-@router.delete("/auth/delete-account")
+@router.delete("/delete-account")
 async def delete_my_account(
     delete_data: AccountDeleteRequest,
     db: Session = Depends(get_db),

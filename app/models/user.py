@@ -8,7 +8,6 @@ from sqlalchemy.orm import relationship
 from app.db.session import Base
 
 class Usuario(Base):
-    productos = relationship("Producto", back_populates="usuario")
     __tablename__ = "Usuarios"
 
     UsuarioID = Column(Integer, primary_key=True, index=True)
@@ -16,3 +15,8 @@ class Usuario(Base):
     Email = Column(String(100), unique=True, nullable=False)
     ContraseñaHash = Column(String(255), nullable=False)
     fechaRegistro = Column(String, nullable=True)  
+    
+    # TEMPORALMENTE COMENTADAS - USANDO STORED PROCEDURES
+    # Relaciones
+    # productos = relationship("Producto", back_populates="usuario")
+    # categorias = relationship("Categoria", back_populates="usuario")  

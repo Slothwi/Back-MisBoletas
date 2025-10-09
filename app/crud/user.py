@@ -3,9 +3,10 @@ from app.schemas.user import UserCreate, UserRead
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 from fastapi import HTTPException
-from sqlalchemy.exc import IntegrityError
-from datetime import datetime
 from app.core.security import hash_password
+import logging
+
+logger = logging.getLogger(__name__)
 
 # ===== FUNCIONES ESENCIALES PARA LOGIN/REGISTER =====
 
@@ -48,10 +49,23 @@ def create_user(db: Session, user: UserCreate):
         
     except Exception as e:
         db.rollback()
-        error_message = str(e)
-        if "ya está registrado" in error_message:
+        error_message = str(e).lower()
+        
+        # Manejo específico para emails duplicados
+        if "email ya está registrado" in error_message or "duplicate" in error_message or "unique constraint" in error_message:
             raise HTTPException(status_code=400, detail="El email ya está registrado")
-        raise HTTPException(status_code=500, detail=f"Error al crear usuario: {error_message}")
+        
+        # Manejo específico para errores de procedimiento almacenado
+        if "raiserror" in error_message:
+            # Extraer el mensaje del RAISERROR
+            if "email ya está registrado" in error_message:
+                raise HTTPException(status_code=400, detail="El email ya está registrado")
+            else:
+                raise HTTPException(status_code=400, detail="Error en los datos proporcionados")
+        
+        # Error genérico
+        logger.error(f"Error completo en create_user: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error interno del servidor: {str(e)}")
 
 # Buscar usuario para login usando SP (para AUTENTICACIÓN)
 def get_user_for_login(db: Session, email: str):

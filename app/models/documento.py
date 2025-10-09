@@ -15,5 +15,6 @@ class Documento(Base):
     TipoArchivo = Column(String(10))
     ProductoID = Column(Integer, ForeignKey("Productos.ProductoID"), nullable=False)
     
+    # TEMPORALMENTE COMENTADAS - CONFLICTO CON STORED PROCEDURES
     # Relaciones
-    producto = relationship("Producto", back_populates="documentos")
+    # producto = relationship("Producto", back_populates="documentos")

@@ -20,7 +20,8 @@ class Producto(Base):
     Notas = Column(Text)                                    
     UsuarioID = Column(Integer, ForeignKey("Usuarios.UsuarioID"), nullable=False)
     
+    # TEMPORALMENTE COMENTADAS - CONFLICTO CON STORED PROCEDURES
     # Relaciones
-    usuario = relationship("Usuario", back_populates="productos")
-    documentos = relationship("Documento", back_populates="producto")
-    categorias = relationship("Categoria", secondary="ProductoCategorias", back_populates="productos")
+    # usuario = relationship("Usuario", back_populates="productos")
+    # documentos = relationship("Documento", back_populates="producto")
+    # categorias = relationship("Categoria", secondary="ProductoCategorias", back_populates="productos")
