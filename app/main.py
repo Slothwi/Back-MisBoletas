@@ -53,11 +53,74 @@ async def root():
 @app.get("/health")
 async def health_check():
     """Endpoint de health check para Render."""
+    from app.services.gcs_service import get_gcs_service
+    
+    # Verificar GCS
+    gcs_status = "disabled"
+    if settings.gcs_enabled:
+        gcs_service = get_gcs_service()
+        gcs_status = "connected" if gcs_service else "error"
+    
     return {
         "status": "healthy",
         "environment": settings.ENV,
-        "database": "connected"
+        "database": "connected",
+        "gcs_enabled": settings.gcs_enabled,
+        "gcs_status": gcs_status,
+        "bucket": settings.gcs_bucket_name if settings.gcs_enabled else None
     }
+
+@app.get("/test-gcs")
+async def test_gcs():
+    """Endpoint para verificar la configuración de Google Cloud Storage."""
+    from app.services.gcs_service import get_gcs_service
+    
+    if not settings.gcs_enabled:
+        return {
+            "status": "disabled",
+            "message": "Google Cloud Storage no está habilitado"
+        }
+    
+    gcs_service = get_gcs_service()
+    
+    if not gcs_service:
+        return {
+            "status": "error",
+            "message": "No se pudo inicializar el servicio GCS",
+            "gcs_credentials_path": settings.gcs_credentials_path,
+            "gcs_bucket_name": settings.gcs_bucket_name
+        }
+    
+    # Intentar listar archivos del bucket (solo verifica conexión)
+    try:
+        bucket = gcs_service.client.bucket(settings.gcs_bucket_name)
+        exists = bucket.exists()
+        
+        if not exists:
+            return {
+                "status": "error",
+                "message": f"El bucket '{settings.gcs_bucket_name}' no existe o no tienes permisos"
+            }
+        
+        # Contar archivos
+        blobs = list(bucket.list_blobs(max_results=10))
+        
+        return {
+            "status": "success",
+            "message": "Google Cloud Storage funcionando correctamente",
+            "bucket_name": settings.gcs_bucket_name,
+            "bucket_exists": True,
+            "files_count": len(blobs),
+            "sample_files": [blob.name for blob in blobs[:5]]
+        }
+        
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": f"Error al conectar con GCS: {str(e)}",
+            "bucket_name": settings.gcs_bucket_name
+        }
+
 
 # Para ejecutar con uvicorn desde la terminal
 # El puerto se toma de la variable de entorno PORT (Render) o usa 8000 por defecto
