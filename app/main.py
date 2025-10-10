@@ -4,6 +4,7 @@ from app.core.middleware import setup_middleware
 from app.core.error_handlers import setup_exception_handlers
 from app.db.session import engine, Base
 from app.core.config import settings
+from sqlalchemy import text, inspect
 import os
 
 # Funcion Para Crear Tablas
@@ -16,6 +17,27 @@ def create_tables():
 
     """Importar Modelos para que Base.metadata los conozca"""
     from app.models import user, categoria, producto, documento, producto_categoria
+    
+    # Verificar y recrear tabla documentos si tiene estructura incorrecta
+    try:
+        inspector = inspect(engine)
+        if inspector.has_table("documentos"):
+            with engine.connect() as conn:
+                # Verificar si existe la columna url_gcs
+                result = conn.execute(text("""
+                    SELECT column_name 
+                    FROM information_schema.columns 
+                    WHERE table_name = 'documentos' AND column_name = 'url_gcs'
+                """))
+                
+                if not result.fetchone():
+                    print("⚠️ Tabla documentos tiene estructura incorrecta. Recreando...")
+                    conn.execute(text("DROP TABLE IF EXISTS documentos CASCADE;"))
+                    conn.commit()
+                    print("✅ Tabla documentos eliminada")
+    except Exception as e:
+        print(f"⚠️ Error al verificar tabla documentos: {e}")
+    
     # Base.metadata contiene la definición de todas tus clases modelo
     Base.metadata.create_all(bind=engine)
     print("Tablas creadas exitosamente o ya existentes.")
