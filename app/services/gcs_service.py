@@ -77,11 +77,14 @@ class GCSService:
             blob = self.bucket.blob(blob_name)
             file_content = await file.read()
             blob.upload_from_string(file_content, content_type=file.content_type or 'application/octet-stream')
-            blob.make_public()
+            
+            # No llamar a make_public() si el bucket tiene Uniform bucket-level access
+            # En su lugar, usar la URL pública directamente
+            public_url = f"https://storage.googleapis.com/{settings.GCS_BUCKET_NAME}/{blob_name}"
             
             return {
                 "blob_name": blob_name,
-                "public_url": blob.public_url,
+                "public_url": public_url,
                 "content_type": file.content_type,
                 "size_bytes": len(file_content),
                 "filename": file.filename
