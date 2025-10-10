@@ -13,7 +13,7 @@ class DocumentoRead(BaseModel):
     documentoid: int = Field(..., alias="DocumentoID")
     productoid: int = Field(..., alias="ProductoID")
     nombrearchivo: str = Field(..., alias="NombreArchivo")
-    url_gcs: str = Field(..., alias="UrlGCS")
+    url_gcs: str = Field(..., alias="URL_GCS")
     blob_name: str = Field(..., alias="BlobName")
     content_type: Optional[str] = Field(None, alias="ContentType")
     size_bytes: Optional[int] = Field(None, alias="SizeBytes")
@@ -46,12 +46,13 @@ class DocumentoDelete(BaseModel):
 # ===== SCHEMA SIMPLIFICADO PARA LISTADO =====
 class DocumentoListItem(BaseModel):
     """Schema simplificado para listar documentos."""
-    documentoid: int
-    nombrearchivo: str
-    url_gcs: str
-    content_type: Optional[str]
-    size_bytes: Optional[int]
-    fecha_subida: datetime
+    documentoid: int = Field(..., alias="DocumentoID")
+    nombrearchivo: str = Field(..., alias="NombreArchivo")
+    url_gcs: str = Field(..., alias="URL_GCS")
+    content_type: Optional[str] = Field(None, alias="ContentType")
+    size_bytes: Optional[int] = Field(None, alias="SizeBytes")
+    fecha_subida: datetime = Field(..., alias="FechaSubida")
     
     class Config:
         from_attributes = True
+        populate_by_name = True

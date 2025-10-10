@@ -165,7 +165,7 @@ async def get_signed_url(
     
     # Generar URL firmada
     signed_url = gcs_service.get_signed_url(
-        blob_name=documento.blob_name,
+        blob_name=documento.BlobName,
         expiration_seconds=expiration_seconds
     )
     

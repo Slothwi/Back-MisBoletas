@@ -21,11 +21,27 @@ class GCSService:
             raise ValueError("Google Cloud Storage no está configurado.")
         
         if settings.GOOGLE_APPLICATION_CREDENTIALS:
-            credentials = service_account.Credentials.from_service_account_file(
-                settings.GOOGLE_APPLICATION_CREDENTIALS
-            )
+            import json
+            import os
+            
+            creds_data = settings.GOOGLE_APPLICATION_CREDENTIALS
+            
+            # Si es un archivo local (desarrollo)
+            if os.path.exists(creds_data):
+                credentials = service_account.Credentials.from_service_account_file(creds_data)
+            # Si es JSON string (Render/Producción)
+            else:
+                try:
+                    creds_dict = json.loads(creds_data)
+                    credentials = service_account.Credentials.from_service_account_info(creds_dict)
+                except json.JSONDecodeError:
+                    raise ValueError(
+                        "GOOGLE_APPLICATION_CREDENTIALS debe ser una ruta válida o JSON string"
+                    )
+            
             self.client = storage.Client(credentials=credentials, project=settings.GCS_PROJECT_ID)
         else:
+            # Usar credenciales por defecto del entorno
             self.client = storage.Client(project=settings.GCS_PROJECT_ID)
         
         self.bucket = self.client.bucket(settings.GCS_BUCKET_NAME)

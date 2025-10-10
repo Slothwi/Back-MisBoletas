@@ -22,8 +22,8 @@ def create_documento(
     """Crea un nuevo documento."""
     # Verificar ownership del producto
     producto = db.query(Producto).filter(
-        Producto.productoid == producto_id,
-        Producto.usuarioid == user_id
+        Producto.ProductoID == producto_id,
+        Producto.UsuarioID == user_id
     ).first()
     
     if not producto:
@@ -31,12 +31,12 @@ def create_documento(
     
     # Crear documento
     documento = Documento(
-        productoid=producto_id,
-        nombrearchivo=nombre_archivo,
-        url_gcs=url_gcs,
-        blob_name=blob_name,
-        content_type=content_type,
-        size_bytes=size_bytes
+        ProductoID=producto_id,
+        NombreArchivo=nombre_archivo,
+        URL_GCS=url_gcs,
+        BlobName=blob_name,
+        ContentType=content_type,
+        SizeBytes=size_bytes
     )
     db.add(documento)
     db.commit()
@@ -52,16 +52,16 @@ def get_documentos_by_producto(
     """Obtiene todos los documentos de un producto."""
     # Verificar ownership
     producto = db.query(Producto).filter(
-        Producto.productoid == producto_id,
-        Producto.usuarioid == user_id
+        Producto.ProductoID == producto_id,
+        Producto.UsuarioID == user_id
     ).first()
     
     if not producto:
         raise HTTPException(404, "Producto no encontrado o sin permisos")
     
     return db.query(Documento).filter(
-        Documento.productoid == producto_id
-    ).order_by(Documento.fecha_subida.desc()).all()
+        Documento.ProductoID == producto_id
+    ).order_by(Documento.FechaSubida.desc()).all()
 
 # ===== OBTENER UN DOCUMENTO POR ID =====
 def get_documento_by_id(
@@ -71,8 +71,8 @@ def get_documento_by_id(
 ) -> Documento:
     """Obtiene un documento específico por ID."""
     documento = db.query(Documento).join(Producto).filter(
-        Documento.documentoid == documento_id,
-        Producto.usuarioid == user_id
+        Documento.DocumentoID == documento_id,
+        Producto.UsuarioID == user_id
     ).first()
     
     if not documento:
@@ -88,14 +88,14 @@ def delete_documento(
 ) -> dict:
     """Elimina un documento."""
     documento = db.query(Documento).join(Producto).filter(
-        Documento.documentoid == documento_id,
-        Producto.usuarioid == user_id
+        Documento.DocumentoID == documento_id,
+        Producto.UsuarioID == user_id
     ).first()
     
     if not documento:
         raise HTTPException(404, "Documento no encontrado o sin permisos")
     
-    blob_name = documento.blob_name
+    blob_name = documento.BlobName
     db.delete(documento)
     db.commit()
     
