@@ -16,6 +16,7 @@ from app.schemas.categorias import (
     CategoriaWithProducts
 )
 from app.models.user import Usuario
+from app.schemas.user import UserRead
 
 router = APIRouter()
 
@@ -25,14 +26,14 @@ def read_categorias(
     skip: int = 0,
     limit: int = 100,
     db: Session = Depends(dependencies.get_db),
-    current_user: Usuario = Depends(dependencies.get_current_user)
+    current_user: UserRead = Depends(dependencies.get_current_user)
 ):
     """
     Obtener todas las categorías del usuario con conteo de productos.
     """
     categorias = crud_categoria.get_categorias_with_product_count(
         db, 
-        usuario_id=current_user.UsuarioID
+        usuario_id=current_user.idUsuario
     )
     return categorias
 
@@ -41,7 +42,7 @@ def read_categorias(
 def read_categoria(
     categoria_id: int,
     db: Session = Depends(dependencies.get_db),
-    current_user: Usuario = Depends(dependencies.get_current_user)
+    current_user: UserRead = Depends(dependencies.get_current_user)
 ):
     """
     Obtener una categoría específica por ID.
@@ -49,7 +50,7 @@ def read_categoria(
     categoria = crud_categoria.get_categoria(
         db, 
         categoria_id=categoria_id, 
-        usuario_id=current_user.UsuarioID
+        usuario_id=current_user.idUsuario
     )
     if not categoria:
         raise HTTPException(
@@ -63,7 +64,7 @@ def read_categoria(
 def create_categoria(
     categoria: CategoriaCreate,
     db: Session = Depends(dependencies.get_db),
-    current_user: Usuario = Depends(dependencies.get_current_user)
+    current_user: UserRead = Depends(dependencies.get_current_user)
 ):
     """
     Crear una nueva categoría para el usuario actual.
@@ -71,7 +72,7 @@ def create_categoria(
     return crud_categoria.create_categoria(
         db, 
         categoria=categoria, 
-        usuario_id=current_user.UsuarioID
+        usuario_id=current_user.idUsuario
     )
 
 
@@ -80,7 +81,7 @@ def update_categoria(
     categoria_id: int,
     categoria: CategoriaUpdate,
     db: Session = Depends(dependencies.get_db),
-    current_user: Usuario = Depends(dependencies.get_current_user)
+    current_user: UserRead = Depends(dependencies.get_current_user)
 ):
     """
     Actualizar una categoría existente.
@@ -89,7 +90,7 @@ def update_categoria(
         db, 
         categoria_id=categoria_id, 
         categoria=categoria,
-        usuario_id=current_user.UsuarioID
+        usuario_id=current_user.idUsuario
     )
     if not updated_categoria:
         raise HTTPException(
@@ -103,7 +104,7 @@ def update_categoria(
 def delete_categoria(
     categoria_id: int,
     db: Session = Depends(dependencies.get_db),
-    current_user: Usuario = Depends(dependencies.get_current_user)
+    current_user: UserRead = Depends(dependencies.get_current_user)
 ):
     """
     Eliminar una categoría.
@@ -111,7 +112,7 @@ def delete_categoria(
     success = crud_categoria.delete_categoria(
         db, 
         categoria_id=categoria_id,
-        usuario_id=current_user.UsuarioID
+        usuario_id=current_user.idUsuario
     )
     if not success:
         raise HTTPException(
@@ -128,13 +129,13 @@ def asignar_categoria_a_producto(
     producto_id: int,
     categoria_id: int,
     db: Session = Depends(dependencies.get_db),
-    current_user: Usuario = Depends(dependencies.get_current_user)
+    current_user: UserRead = Depends(dependencies.get_current_user)
 ):
     """
     Asignar una categoría a un producto.
     """
     # Verificar que la categoría pertenece al usuario
-    categoria = crud_categoria.get_categoria(db, categoria_id, current_user.UsuarioID)
+    categoria = crud_categoria.get_categoria(db, categoria_id, current_user.idUsuario)
     if not categoria:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -151,7 +152,7 @@ def quitar_categoria_de_producto(
     producto_id: int,
     categoria_id: int,
     db: Session = Depends(dependencies.get_db),
-    current_user: Usuario = Depends(dependencies.get_current_user)
+    current_user: UserRead = Depends(dependencies.get_current_user)
 ):
     """
     Quitar una categoría de un producto.
