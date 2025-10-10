@@ -2,12 +2,13 @@
 CRUD operations para Productos usando SQLAlchemy ORM.
 """
 
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from fastapi import HTTPException
 from typing import List, Optional
 
 from app.models.producto import Producto
 from app.models.producto_categoria import ProductoCategoria
+from app.models.categoria import Categoria
 from app.schemas.product import Product
 
 def check_product_ownership(product: Producto, user_id: int):
@@ -46,8 +47,11 @@ def create_product(db: Session, product: Product, categoria_id: Optional[int] = 
 
 # ===== OBTENER PRODUCTO POR ID =====
 def get_product_by_id(db: Session, product_id: int, user_id: int) -> Producto:
-    """Obtiene un producto por ID verificando ownership."""
-    product = db.query(Producto).filter(Producto.ProductoID == product_id).first()
+    """Obtiene un producto por ID verificando ownership y cargando categorías."""
+    product = db.query(Producto)\
+        .filter(Producto.ProductoID == product_id)\
+        .options(joinedload(Producto.producto_categorias).joinedload(ProductoCategoria.categoria))\
+        .first()
     if not product:
         raise HTTPException(404, "Producto no encontrado")
     check_product_ownership(product, user_id)
@@ -55,8 +59,13 @@ def get_product_by_id(db: Session, product_id: int, user_id: int) -> Producto:
 
 # ===== OBTENER PRODUCTOS POR USUARIO =====
 def get_products_by_user(db: Session, user_id: int) -> List[Producto]:
-    """Obtiene todos los productos de un usuario."""
-    return db.query(Producto).filter(Producto.UsuarioID == user_id).all()
+    """Obtiene todos los productos de un usuario con sus categorías."""
+    productos = db.query(Producto)\
+        .filter(Producto.UsuarioID == user_id)\
+        .options(joinedload(Producto.producto_categorias).joinedload(ProductoCategoria.categoria))\
+        .all()
+    
+    return productos
 
 # ===== ACTUALIZAR PRODUCTO =====
 def update_product(db: Session, product: Product) -> Producto:

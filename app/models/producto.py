@@ -42,3 +42,8 @@ class Producto(Base):
         back_populates="producto",
         cascade="all, delete-orphan"
     )
+    
+    @property
+    def categorias(self):
+        """Propiedad computada para obtener las categorías del producto"""
+        return [pc.categoria for pc in self.producto_categorias]
