@@ -24,3 +24,9 @@ class Usuario(Base):
         back_populates="usuario",
         cascade="all, delete-orphan"
     )
+    
+    categorias = relationship(
+        "Categoria",
+        back_populates="usuario",
+        cascade="all, delete-orphan"
+    )

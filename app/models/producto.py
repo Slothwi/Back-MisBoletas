@@ -36,9 +36,9 @@ class Producto(Base):
         cascade="all, delete-orphan"
     )
     
-    # Relación uno-a-muchos: Un producto puede tener múltiples categorías
-    categorias = relationship(
-        "Categoria",
+    # Relación uno-a-muchos: Un producto puede tener múltiples categorías asignadas (M2M a través de ProductoCategoria)
+    producto_categorias = relationship(
+        "ProductoCategoria",
         back_populates="producto",
         cascade="all, delete-orphan"
     )
