@@ -7,8 +7,7 @@ from fastapi import HTTPException
 from typing import List, Optional
 
 from app.models.producto import Producto
-from app.models.producto_categoria import ProductoCategoria
-from app.models.categoria import Categoria
+from app.models.categoria import ProductoCategoria, Categoria
 from app.schemas.product import Product
 
 def check_product_ownership(product: Producto, user_id: int):
