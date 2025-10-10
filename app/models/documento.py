@@ -13,20 +13,20 @@ class Documento(Base):
     __tablename__ = "documentos"
     
     # Clave Primaria Autoincremental
-    documentoid = Column(Integer, primary_key=True, index=True)
-    productoid = Column(Integer, ForeignKey("productos.productoid", ondelete='CASCADE'), nullable=False, index=True)
+    DocumentoID = Column("documentoid", Integer, primary_key=True, index=True)
+    ProductoID = Column("productoid", Integer, ForeignKey("productos.productoid", ondelete='CASCADE'), nullable=False, index=True)
     
     # Información del archivo
-    nombrearchivo = Column(String(255), nullable=False)        # Nombre original del archivo
-    url_gcs = Column(String(500), nullable=False)              # URL completa de GCS (público o firmado)
-    blob_name = Column(String(500), nullable=False, unique=True)  # Nombre del blob en GCS (para eliminación)
+    NombreArchivo = Column("nombrearchivo", String(255), nullable=False)        # Nombre original del archivo
+    URL_GCS = Column("url_gcs", String(500), nullable=False)              # URL completa de GCS (público o firmado)
+    BlobName = Column("blob_name", String(500), nullable=False, unique=True)  # Nombre del blob en GCS (para eliminación)
     
     # Metadatos del archivo
-    content_type = Column(String(100))                         # Tipo MIME (application/pdf, image/jpeg, etc.)
-    size_bytes = Column(BigInteger)                            # Tamaño en bytes
+    ContentType = Column("content_type", String(100))                         # Tipo MIME (application/pdf, image/jpeg, etc.)
+    SizeBytes = Column("size_bytes", BigInteger)                            # Tamaño en bytes
     
     # Timestamps
-    fecha_subida = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    FechaSubida = Column("fecha_subida", DateTime(timezone=True), server_default=func.now(), nullable=False)
     
     # Relación con el producto
     producto = relationship("Producto", back_populates="documentos")

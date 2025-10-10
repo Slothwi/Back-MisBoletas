@@ -11,9 +11,9 @@ class Categoria(Base):
     __tablename__ = "productocategorias"
     
     # Campos exactamente como en el esquema PostgreSQL
-    id = Column(Integer, primary_key=True)
-    productoid = Column(Integer, ForeignKey('productos.productoid', ondelete='CASCADE'))
-    categoria = Column(String(100))
+    ID = Column("id", Integer, primary_key=True)
+    ProductoID = Column("productoid", Integer, ForeignKey('productos.productoid', ondelete='CASCADE'))
+    Categoria = Column("categoria", String(100))
     
     # Relación con el producto
     producto = relationship("Producto", back_populates="categorias")
