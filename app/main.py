@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from app.api.v1 import user, product, documento
+from app.api.v1 import user, product, documento, categorias
 from app.core.middleware import setup_middleware
 from app.core.error_handlers import setup_exception_handlers
 from app.db.session import engine, Base
@@ -37,14 +37,16 @@ setup_exception_handlers(app)
 # Registrar routers de endpoints
 app.include_router(user.router, prefix="/api/v1", tags=["Usuarios"])
 app.include_router(product.router, prefix="/api/v1", tags=["Productos"])
+app.include_router(categorias.router, prefix="/api/v1", tags=["Categorías"])
 app.include_router(documento.router, prefix="/api/v1", tags=["Documentos"])
+
 
 @app.get("/")
 async def root():
     """Endpoint raíz para verificar que la API está funcionando."""
     return {
         "message": "MisBoletas API",
-        "version": "2.0.0",
+        "version": "1.0.0",
         "docs": "/docs",
         "environment": settings.ENV,
         "gcs_enabled": settings.gcs_enabled
