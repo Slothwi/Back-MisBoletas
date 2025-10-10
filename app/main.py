@@ -55,11 +55,14 @@ async def health_check():
     """Endpoint de health check para Render."""
     from app.services.gcs_service import get_gcs_service
     
-    # Verificar GCS
+    # Verificar GCS de forma segura
     gcs_status = "disabled"
-    if settings.gcs_enabled:
-        gcs_service = get_gcs_service()
-        gcs_status = "connected" if gcs_service else "error"
+    try:
+        if settings.gcs_enabled:
+            gcs_service = get_gcs_service()
+            gcs_status = "connected" if gcs_service else "error"
+    except Exception as e:
+        gcs_status = f"error: {str(e)}"
     
     return {
         "status": "healthy",
