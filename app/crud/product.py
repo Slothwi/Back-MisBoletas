@@ -4,9 +4,10 @@ CRUD operations para Productos usando SQLAlchemy ORM.
 
 from sqlalchemy.orm import Session
 from fastapi import HTTPException
-from typing import List
+from typing import List, Optional
 
 from app.models.producto import Producto
+from app.models.producto_categoria import ProductoCategoria
 from app.schemas.product import Product
 
 def check_product_ownership(product: Producto, user_id: int):
@@ -15,8 +16,8 @@ def check_product_ownership(product: Producto, user_id: int):
         raise HTTPException(403, "No tienes permiso para acceder a este producto")
 
 # ===== CREAR PRODUCTO =====
-def create_product(db: Session, product: Product) -> Producto:
-    """Crea un nuevo producto en la BD."""
+def create_product(db: Session, product: Product, categoria_id: Optional[int] = None) -> Producto:
+    """Crea un nuevo producto en la BD y opcionalmente lo asigna a una categoría."""
     db_product = Producto(
         NombreProducto=product.NombreProducto,
         FechaCompra=product.FechaCompra,
@@ -30,6 +31,17 @@ def create_product(db: Session, product: Product) -> Producto:
     db.add(db_product)
     db.commit()
     db.refresh(db_product)
+    
+    # Si se proporcionó una categoría, crear la relación
+    if categoria_id:
+        producto_categoria = ProductoCategoria(
+            ProductoID=db_product.ProductoID,
+            CategoriaID=categoria_id
+        )
+        db.add(producto_categoria)
+        db.commit()
+        print(f"✅ Producto {db_product.ProductoID} asignado a categoría {categoria_id}")
+    
     return db_product
 
 # ===== OBTENER PRODUCTO POR ID =====

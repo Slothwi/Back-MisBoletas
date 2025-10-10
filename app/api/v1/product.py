@@ -40,6 +40,9 @@ async def create_product(
     current_user: UserRead = Depends(get_current_user)
 ):
     """Crea un nuevo producto asociado al usuario autenticado."""
+    print(f"📝 Creando producto para usuario {current_user.idUsuario}")
+    print(f"📋 Datos recibidos: {product_data.model_dump()}")
+    
     product = Product(
         ProductoID=0,
         NombreProducto=product_data.NombreProducto,
@@ -51,7 +54,15 @@ async def create_product(
         Notas=product_data.Notas or "",
         UsuarioID=current_user.idUsuario
     )
-    created = crud_product.create_product(db, product)
+    
+    # Crear producto y asignar categoría si se proporcionó
+    created = crud_product.create_product(db, product, categoria_id=product_data.categoria_id)
+    
+    if product_data.categoria_id:
+        print(f"✅ Producto creado y asignado a categoría {product_data.categoria_id}")
+    else:
+        print(f"✅ Producto creado sin categoría")
+    
     return ProductRead.model_validate(created)
 
 @router.put("/products/{product_id}", response_model=ProductRead)

@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 from datetime import date
-from typing import Optional
+from typing import Optional, List
 
 # ===== SCHEMAS CORREGIDOS - SIN CONFUSIÓN =====
 
@@ -27,7 +27,8 @@ class ProductCreate(BaseModel):
     Marca: Optional[str] = Field(None, max_length=100)      
     Modelo: Optional[str] = Field(None, max_length=100)         
     Tienda: Optional[str] = Field(None, max_length=255)       
-    Notas: Optional[str] = Field(None, max_length=5000)                  
+    Notas: Optional[str] = Field(None, max_length=5000)
+    categoria_id: Optional[int] = None  # NUEVO: Categoría del producto
     # UsuarioID se asigna automáticamente desde el token
 
 # Schema para ACTUALIZAR productos (todos los campos opcionales)
