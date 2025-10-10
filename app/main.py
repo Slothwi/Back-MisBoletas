@@ -53,56 +53,45 @@ async def root():
 @app.get("/health")
 async def health_check():
     """Endpoint de health check para Render."""
-    from app.services.gcs_service import get_gcs_service
-    
-    # Verificar GCS de forma segura
-    gcs_status = "disabled"
-    try:
-        if settings.gcs_enabled:
-            gcs_service = get_gcs_service()
-            gcs_status = "connected" if gcs_service else "error"
-    except Exception as e:
-        gcs_status = f"error: {str(e)}"
-    
     return {
         "status": "healthy",
         "environment": settings.ENV,
         "database": "connected",
         "gcs_enabled": settings.gcs_enabled,
-        "gcs_status": gcs_status,
-        "bucket": settings.gcs_bucket_name if settings.gcs_enabled else None
+        "gcs_bucket": settings.GCS_BUCKET_NAME if settings.gcs_enabled else None
     }
 
 @app.get("/test-gcs")
 async def test_gcs():
     """Endpoint para verificar la configuración de Google Cloud Storage."""
-    from app.services.gcs_service import get_gcs_service
-    
-    if not settings.gcs_enabled:
-        return {
-            "status": "disabled",
-            "message": "Google Cloud Storage no está habilitado"
-        }
-    
-    gcs_service = get_gcs_service()
-    
-    if not gcs_service:
-        return {
-            "status": "error",
-            "message": "No se pudo inicializar el servicio GCS",
-            "gcs_credentials_path": settings.gcs_credentials_path,
-            "gcs_bucket_name": settings.gcs_bucket_name
-        }
-    
-    # Intentar listar archivos del bucket (solo verifica conexión)
     try:
-        bucket = gcs_service.client.bucket(settings.gcs_bucket_name)
+        from app.services.gcs_service import get_gcs_service
+        
+        if not settings.gcs_enabled:
+            return {
+                "status": "disabled",
+                "message": "Google Cloud Storage no está habilitado",
+                "gcs_enabled": False
+            }
+        
+        gcs_service = get_gcs_service()
+        
+        if not gcs_service:
+            return {
+                "status": "error",
+                "message": "No se pudo inicializar el servicio GCS",
+                "gcs_credentials": settings.GOOGLE_APPLICATION_CREDENTIALS,
+                "gcs_bucket": settings.GCS_BUCKET_NAME
+            }
+        
+        # Intentar listar archivos del bucket (solo verifica conexión)
+        bucket = gcs_service.client.bucket(settings.GCS_BUCKET_NAME)
         exists = bucket.exists()
         
         if not exists:
             return {
                 "status": "error",
-                "message": f"El bucket '{settings.gcs_bucket_name}' no existe o no tienes permisos"
+                "message": f"El bucket '{settings.GCS_BUCKET_NAME}' no existe o no tienes permisos"
             }
         
         # Contar archivos
@@ -111,7 +100,7 @@ async def test_gcs():
         return {
             "status": "success",
             "message": "Google Cloud Storage funcionando correctamente",
-            "bucket_name": settings.gcs_bucket_name,
+            "bucket_name": settings.GCS_BUCKET_NAME,
             "bucket_exists": True,
             "files_count": len(blobs),
             "sample_files": [blob.name for blob in blobs[:5]]
@@ -121,7 +110,7 @@ async def test_gcs():
         return {
             "status": "error",
             "message": f"Error al conectar con GCS: {str(e)}",
-            "bucket_name": settings.gcs_bucket_name
+            "error_type": type(e).__name__
         }
 
 
